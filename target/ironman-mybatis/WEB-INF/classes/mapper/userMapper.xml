@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ironman.mapper.UserMapper">
+	<select id="selectUserById" parameterType="java.lang.Long" resultType="user">
+		SELECT * from user2 where id = #{id}
+	</select>
+
+	<insert id="insertUser" parameterType="user" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO user2(username,psw,addr,age,createDate)
+		VALUES(#{username},#{psw},#{addr},#{age},#{createDate})
+	</insert>
+</mapper>

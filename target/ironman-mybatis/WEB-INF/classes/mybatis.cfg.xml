@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<!--
+		该文件已不需要
+		所有映射配置均在 spring-base.xml 的 bean 节点 id 为 sqlSessionFactctory 中配置完成
+	 -->
+</configuration>

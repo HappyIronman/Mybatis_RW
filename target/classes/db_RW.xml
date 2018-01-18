@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 数据源文件 -->
+	<context:property-placeholder location="classpath:db.properties"/>
+
+	<!-- 数据源 : master -->
+	<bean id="dataSource_master"
+	      class="com.mchange.v2.c3p0.ComboPooledDataSource"
+	      destroy-method="close">
+
+		<property name="driverClass" value="${jdbc.driverClassName}"/>
+		<property name="jdbcUrl" value="${jdbc.url}"/>
+		<property name="user" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+		<!-- 详细参数说明参见database-config.properties -->
+		<property name="initialPoolSize" value="${jdbc.initialPoolSize}"/>
+		<property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+		<property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+		<property name="maxIdleTime" value="${jdbc.maxIdleTime}"/>
+		<property name="acquireIncrement" value="${jdbc.acquireIncrement}"/>
+		<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}"/>
+		<property name="acquireRetryAttempts" value="${jdbc.acquireRetryAttempts}"/>
+		<property name="breakAfterAcquireFailure" value="${jdbc.breakAfterAcquireFailure}"/>
+		<property name="maxStatements" value="${jdbc.maxStatements}"/>
+		<property name="testConnectionOnCheckout" value="${jdbc.testConnectionOnCheckout}"/>
+	</bean>
+
+
+	<!-- 数据源 : slave -->
+	<bean id="dataSource_slave"
+	      class="com.mchange.v2.c3p0.ComboPooledDataSource"
+	      destroy-method="close">
+
+		<property name="driverClass" value="${jdbc.driverClassName}"/>
+		<property name="jdbcUrl" value="${jdbc.url}"/>
+		<property name="user" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+		<!-- 详细参数说明参见database-config.properties -->
+		<property name="initialPoolSize" value="${jdbc.initialPoolSize}"/>
+		<property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+		<property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+		<property name="maxIdleTime" value="${jdbc.maxIdleTime}"/>
+		<property name="acquireIncrement" value="${jdbc.acquireIncrement}"/>
+		<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}"/>
+		<property name="acquireRetryAttempts" value="${jdbc.acquireRetryAttempts}"/>
+		<property name="breakAfterAcquireFailure" value="${jdbc.breakAfterAcquireFailure}"/>
+		<property name="maxStatements" value="${jdbc.maxStatements}"/>
+		<property name="testConnectionOnCheckout" value="${jdbc.testConnectionOnCheckout}"/>
+	</bean>
+
+
+	<!-- 动态数据源 -->
+	<bean id="dynamicDataSource" class="com.ironman.conf.DynamicDataSource">
+		<!-- 通过key-value关联数据源 -->
+		<!--<property name="targetDataSources">-->
+		<!--<map>-->
+		<!--<entry value-ref="dataSource_master" key="dataSource_master"/>-->
+		<!--<entry value-ref="dataSource_slave" key="dataSource_slave"/>-->
+		<!--</map>-->
+		<!--</property>-->
+		<property name="masterDataSource" ref="dataSource_master"/>
+		<property name="slaveDataSource" ref="dataSource_slave"/>
+	</bean>
+
+
+	<!--
+		mybatis 的SqlSession 的工厂: SqlSessionFactoryBean
+		mapperLocations : 每个Mapper类对应的 xml 映射文件(扫描该文件以及子文件中的xml映射文件)
+		typeAliasesPackage : 每个实体类对应的别名(默认即类名)
+	-->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dynamicDataSource"/>
+		<!-- 加载mybatis.cfg.xml文件 -->
+		<property name="configLocation" value="classpath:mybatis.cfg.xml"/>
+		<!-- 自动扫描需要定义类别名的包，将包内的JAVA类的类名作为类别名 -->
+		<property name="typeAliasesPackage" value="com.ironman.beans"/>
+		<property name="mapperLocations" value="classpath:mapper/*.xml"/>
+
+		<property name="plugins">
+			<array>
+				<bean class="com.ironman.conf.DynamicPlugin"/>
+			</array>
+		</property>
+	</bean>
+
+	<!--
+		mybatis 自动扫描加载  beanMapper 映射文件 : MapperScannerConfigurer
+		basePackage : 所有Mapper类对应的包(扫描该包以及子包下面的类)
+	-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.ironman.mapper"/>
+	</bean>
+
+	<!--  事务管理 : DataSourceTransactionManager -->
+	<bean id="transactionManager" class="com.ironman.conf.DynamicDataSourceTransactionManager">
+		<property name="dataSource" ref="dynamicDataSource"/>
+	</bean>
+
+	<!--<aop:aspectj-autoproxy proxy-target-class="false"/>-->
+
+	<!--<bean class="com.ironman.conf.DatasourceAspect"/>-->
+
+	<!--
+		使用声明式事务
+	-->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+</beans>
